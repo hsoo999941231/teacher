@@ -5,7 +5,7 @@ window.SITE_DATA = [
     "category": "science",
     "title": "제동거리 체험",
     "description": "돌발 상황에서 제동하며 반응 시간, 공주 거리와 제동 거리를 확인하는 체험 자료입니다. PC 키보드로 이용해 주세요.",
-    "targets": [{"grade":"고2","subject":"물리학"},{"grade":"고3","subject":"물리학"}],
+    "targets": [{"grade":"고2","subject":"물리학"}],
     "workCategory": "",
     "type": "시뮬레이션",
     "author": "",
