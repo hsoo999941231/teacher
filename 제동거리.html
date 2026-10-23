@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>물리학1 - 1인칭 제동거리 체험 (사고현장/사운드)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Malgun Gothic', sans-serif; user-select: none; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; }
+        .start-box { background: #1e293b; padding: 3rem; border-radius: 1rem; text-align: center; border: 2px solid #3b82f6; box-shadow: 0 0 40px rgba(59, 130, 246, 0.4); width: 90%; max-width: 500px; }
+        .name-input { font-size: 1.5rem; padding: 0.75rem; border-radius: 0.5rem; text-align: center; color: black; margin-bottom: 1.5rem; width: 100%; border: 2px solid #94a3b8; outline: none; }
+        .name-input:focus { border-color: #3b82f6; }
+
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; display: none; }
+        
+        #status-msg { margin-top: 2rem; text-align: center; font-size: 2.5rem; font-weight: bold; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+
+        #dashboard { background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 2rem; display: flex; justify-content: space-between; align-items: flex-end; }
+        .speedometer { background: rgba(0,0,0,0.6); border: 4px solid #333; border-radius: 20px; padding: 1rem 2rem; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        .speed-val { font-size: 4rem; font-family: monospace; font-weight: bold; color: #00ffcc; text-shadow: 0 0 10px #00ffcc; }
+        
+        #result-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(15, 23, 42, 0.95); border: 2px solid #3b82f6; border-radius: 1rem; padding: 2.5rem; color: white; text-align: center; display: none; pointer-events: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); width: 90%; max-width: 900px; }
+        .stat-row { display: flex; justify-content: space-between; margin: 0.75rem 0; font-size: 1.1rem; border-bottom: 1px solid #334155; padding-bottom: 0.25rem; }
+        .stat-val { font-family: monospace; font-weight: bold; color: #60a5fa; }
+        
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-10px, 0, 0); } 20%, 80% { transform: translate3d(15px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-20px, 0, 0); } 40%, 60% { transform: translate3d(20px, 0, 0); } }
+        
+        #flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: red; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+    <div id="flash"></div>
+
+    <div id="start-screen">
+        <div class="start-box">
+            <h1 class="text-4xl font-bold text-yellow-400 mb-2">🏎️ 골든 브레이크</h1>
+            <p class="text-gray-300 mb-6 text-sm">자신의 차선(우측)을 지키며 가속하세요.<br>좌측 차선에는 정상 주행 중인 차들이 끊임없이 지나갑니다!<br>돌발 상황 시, <b>핸들을 꺾지 말고 오직 브레이크로만</b> 멈춰야 합니다.</p>
+            <input type="text" id="player-name" class="name-input" placeholder="도전자 이름 입력" autocomplete="off" maxlength="10">
+            <button onclick="startGame()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg transition-transform hover:scale-105 active:scale-95">
+                도전 시작 (Enter)
+            </button>
+            <p class="text-gray-500 text-xs mt-4">※ 사운드가 켜져 있습니다. 볼륨을 조절해 주세요.</p>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div id="status-msg">지정 속도(60km/h)까지 엑셀(↑)을 밟아 가속하세요!</div>
+        
+        <div id="dashboard">
+            <div class="text-gray-400 text-base">
+                <div class="mb-2"><strong>👤 도전자: <span id="current-player-display" class="text-white font-bold"></span></strong></div>
+                <div>가속: ⌨️ <kbd class="bg-gray-700 px-1 rounded">↑</kbd> 또는 우측 페달</div>
+                <div>제동: ⌨️ <kbd class="bg-gray-700 px-1 rounded">↓</kbd> / <kbd class="bg-gray-700 px-1 rounded">Space</kbd> 또는 좌측 페달</div>
+                <div class="text-yellow-400 mt-1">조향: ⌨️ <kbd class="bg-gray-700 px-1 rounded">←</kbd> <kbd class="bg-gray-700 px-1 rounded">→</</kbd> 또는 레이싱 휠 회전</div>
+            </div>
+            
+            <div class="speedometer">
+                <div class="text-gray-300 text-xl mb-1">현재 속력</div>
+                <div><span class="speed-val" id="speedDisplay">0</span> <span class="text-2xl text-gray-400">km/h</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <h2 id="result-title" class="text-4xl font-bold mb-4 text-red-500">💥 충돌했습니다!</h2>
+        <p id="result-desc" class="text-md text-gray-300 mb-6">물리 법칙은 속일 수 없습니다.</p>
+
+        <div class="flex flex-col md:flex-row gap-6 mb-6">
+            <div class="flex-1 bg-slate-800 p-5 rounded-lg border border-slate-600">
+                <div class="text-left text-sm text-gray-400 mb-3 border-b border-slate-600 pb-2">📊 내 물리 기록 분석</div>
+                
+                <div class="stat-row">
+                    <span>장애물 발견 시 속력 ($v_0$)</span>
+                    <span class="stat-val" id="res-speed">0 km/h</span>
+                </div>
+                <div class="stat-row">
+                    <span>반응 시간 (공주 시간)</span>
+                    <span class="stat-val text-yellow-400" id="res-rt">0.00 초</span>
+                </div>
+                <div class="stat-row">
+                    <span>공주 거리 (반응 전 이동)</span>
+                    <span class="stat-val text-yellow-400" id="res-rd">0.0 m</span>
+                </div>
+                <div class="stat-row">
+                    <span>실제 제동 거리 ($s$)</span>
+                    <span class="stat-val text-blue-400" id="res-bd">0.0 m</span>
+                </div>
+                <div class="stat-row border-t-2 border-white mt-3 pt-3 font-bold text-xl">
+                    <span>총 정지 거리</span>
+                    <span class="stat-val text-green-400" id="res-td">0.0 m</span>
+                </div>
+            </div>
+
+            <div class="flex-1 bg-slate-800 p-5 rounded-lg border border-yellow-600 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-400"></div>
+                <div class="text-center font-bold text-yellow-400 mb-3 text-lg border-b border-slate-600 pb-2">🏆 명예의 전당 (Top 5)</div>
+                
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-gray-400 border-b border-slate-700">
+                            <th class="py-1 w-12 text-center">순위</th>
+                            <th class="py-1">이름</th>
+                            <th class="py-1 text-right">제동 속력</th>
+                            <th class="py-1 text-right">제동 거리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body" class="text-white">
+                        <tr><td colspan="4" class="text-center py-4 text-gray-500">아직 성공한 도전자가 없습니다.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="flex justify-center gap-4">
+            <button onclick="resetSimulation(false)" class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform hover:scale-105 active:scale-95">
+                🔄 다시 도전
+            </button>
+            <button onclick="resetSimulation(true)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-transform hover:scale-105 active:scale-95">
+                👤 새 도전자 등록
+            </button>
+        </div>
+    </div>
+
+<script>
+    // --- 웹 오디오 API 사운드 시스템 ---
+    let audioCtx;
+    let engineOsc, engineGain;
+    let brakeOsc, brakeGain;
+    
+    function initAudio() {
+        if(audioCtx) return; 
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        engineOsc = audioCtx.createOscillator();
+        engineOsc.type = 'sawtooth';
+        engineOsc.frequency.value = 50; 
+        
+        engineGain = audioCtx.createGain();
+        engineGain.gain.value = 0; 
+        
+        const engineFilter = audioCtx.createBiquadFilter();
+        engineFilter.type = 'lowpass';
+        engineFilter.frequency.value = 400;
+
+        engineOsc.connect(engineFilter);
+        engineFilter.connect(engineGain);
+        engineGain.connect(audioCtx.destination);
+        engineOsc.start();
+
+        brakeOsc = audioCtx.createOscillator();
+        brakeOsc.type = 'square';
+        brakeOsc.frequency.value = 800;
+        
+        brakeGain = audioCtx.createGain();
+        brakeGain.gain.value = 0;
+
+        const brakeFilter = audioCtx.createBiquadFilter();
+        brakeFilter.type = 'bandpass';
+        brakeFilter.frequency.value = 1500;
+
+        brakeOsc.connect(brakeFilter);
+        brakeFilter.connect(brakeGain);
+        brakeGain.connect(audioCtx.destination);
+        brakeOsc.start();
+    }
+
+    function updateAudioEffects(velocity, isBraking) {
+        if(!audioCtx || audioCtx.state !== 'running') return;
+        const now = audioCtx.currentTime;
+
+        const targetEngineFreq = 50 + (velocity * 3);
+        const targetEngineVol = velocity > 0 ? 0.05 + (velocity * 0.002) : 0.02;
+        engineOsc.frequency.setTargetAtTime(targetEngineFreq, now, 0.1);
+        engineGain.gain.setTargetAtTime(targetEngineVol, now, 0.1);
+
+        if (isBraking && velocity > 2) { 
+            brakeOsc.frequency.setValueAtTime(800 + Math.random() * 200, now);
+            brakeGain.gain.setTargetAtTime(0.1, now, 0.05);
+        } else {
+            brakeGain.gain.setTargetAtTime(0, now, 0.05);
+        }
+    }
+
+    function playCrashSound() {
+        if(!audioCtx) return;
+        const bufferSize = audioCtx.sampleRate * 1.5; 
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.8; 
+        }
+        
+        const noiseSource = audioCtx.createBufferSource();
+        noiseSource.buffer = buffer;
+        
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1500, audioCtx.currentTime);
+        filter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 1); 
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.8, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.0);
+
+        noiseSource.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        noiseSource.start();
+    }
+
+    function playSuccessSound() {
+        if(!audioCtx) return;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; 
+        notes.forEach((freq, i) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.value = freq;
+            osc.type = 'sine';
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime + (i * 0.1); 
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.2, now + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            
+            osc.start(now);
+            osc.stop(now + 0.6);
+        });
+    }
+
+    function playFailSound() {
+        if(!audioCtx) return;
+        const notes = [200, 215]; 
+        notes.forEach((freq) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.value = freq;
+            osc.type = 'sawtooth';
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 1.0);
+            
+            osc.start(now);
+            osc.stop(now + 1.1);
+        });
+    }
+
+    // --- 리더보드 및 전역 상태 관리 ---
+    let currentPlayerName = "";
+    let leaderboard = []; 
+    let state = 'START_SCREEN'; 
+
+    // --- Three.js 초기화 ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    
+    const skyColor = 0x111827; 
+    scene.background = new THREE.Color(skyColor); 
+    scene.fog = new THREE.FogExp2(skyColor, 0.015); 
+
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 300);
+    let carX = 2; 
+    camera.position.set(carX, 1.2, 0); 
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
+
+    const ambientLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.4);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    dirLight.position.set(0, 50, -50);
+    scene.add(dirLight);
+
+    const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+    const groundMat = new THREE.MeshLambertMaterial({ color: 0x0f0f0f }); 
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.1;
+    scene.add(ground);
+
+    const roadWidth = 10; 
+    const roadGeo = new THREE.PlaneGeometry(roadWidth, 1000);
+    const roadMat = new THREE.MeshLambertMaterial({ color: 0x1f2224 });
+    const road = new THREE.Mesh(roadGeo, roadMat);
+    road.rotation.x = -Math.PI / 2;
+    scene.add(road);
+
+    const lines = [];
+    for(let i = 0; i < 20; i++) {
+        const lineGeo = new THREE.PlaneGeometry(0.2, 4);
+        const lineMat = new THREE.MeshBasicMaterial({ color: 0xffcc00 }); 
+        const line = new THREE.Mesh(lineGeo, lineMat);
+        line.rotation.x = -Math.PI / 2;
+        line.position.z = -i * 10;
+        line.position.y = 0.01;
+        scene.add(line);
+        lines.push(line);
+    }
+
+    const rails = [];
+    const railGeo = new THREE.BoxGeometry(0.3, 0.8, 10);
+    const railMat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+    for(let i=0; i<15; i++) {
+        const rL = new THREE.Mesh(railGeo, railMat);
+        rL.position.set(-5.2, 0.4, -i*10);
+        scene.add(rL); rails.push(rL);
+        
+        const rR = new THREE.Mesh(railGeo, railMat);
+        rR.position.set(5.2, 0.4, -i*10);
+        scene.add(rR); rails.push(rR);
+    }
+
+    function createBuildingMaterial() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256; canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#1e2430'; 
+        ctx.fillRect(0, 0, 256, 256);
+        
+        for(let y = 10; y < 256; y += 30) {
+            for(let x = 10; x < 256; x += 30) {
+                if(Math.random() > 0.6) {
+                    ctx.fillStyle = Math.random() > 0.5 ? '#fef3c7' : '#fde68a';
+                    ctx.globalAlpha = 0.7 + Math.random() * 0.3;
+                } else {
+                    ctx.fillStyle = '#0f172a';
+                    ctx.globalAlpha = 1.0;
+                }
+                ctx.fillRect(x, y, 15, 20);
+            }
+        }
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return new THREE.MeshLambertMaterial({ map: texture });
+    }
+
+    const buildings = [];
+    for(let i=0; i<30; i++) {
+        const width = 12 + Math.random() * 20;
+        const height = 20 + Math.random() * 60; 
+        const depth = 15 + Math.random() * 15;
+        const bGeo = new THREE.BoxGeometry(width, height, depth);
+        
+        const bMat = createBuildingMaterial();
+        bMat.map.repeat.set(width / 15, height / 15); 
+        const bMesh = new THREE.Mesh(bGeo, bMat);
+        
+        const isLeft = Math.random() > 0.5;
+        const minDistance = 7 + (width / 2); 
+        const xPos = isLeft ? -(minDistance + Math.random() * 10) : (minDistance + Math.random() * 10);
+        
+        bMesh.position.set(xPos, height/2, -Math.random() * 250);
+        scene.add(bMesh);
+        buildings.push(bMesh);
+    }
+
+    function createCarGroup(bodyColor) {
+        const group = new THREE.Group();
+        const bodyGeo = new THREE.BoxGeometry(2.2, 0.8, 4.5);
+        const bodyMat = new THREE.MeshLambertMaterial({ color: bodyColor });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.4;
+        group.add(body);
+        
+        const cabinGeo = new THREE.BoxGeometry(1.8, 0.7, 2.4);
+        const cabinMat = new THREE.MeshLambertMaterial({ color: 0x111111 }); 
+        const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+        cabin.position.set(0, 1.15, -0.2);
+        group.add(cabin);
+        
+        group.userData = { hazardLights: [], headLights: [] }; 
+        return group;
+    }
+
+    function addHazardLights(carGroup) {
+        const hazardMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        const hazardL = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.25, 0.1), hazardMat);
+        hazardL.position.set(-0.8, 0.6, 2.25);
+        const hazardR = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.25, 0.1), hazardMat);
+        hazardR.position.set(0.8, 0.6, 2.25);
+        
+        const hazardGlow = new THREE.PointLight(0xff0000, 1.0, 6); 
+        hazardGlow.position.set(0, 0.6, 2.5);
+        
+        carGroup.add(hazardL); carGroup.add(hazardR); carGroup.add(hazardGlow);
+        carGroup.userData.hazardLights.push(hazardL, hazardR, hazardGlow);
+    }
+
+    // --- 다중 추돌 사고 현장 구성 (우측 차선에만 배치) ---
+    const crashSceneGroup = new THREE.Group();
+    
+    const crashedCar1 = createCarGroup(0x1a1a1a);
+    addHazardLights(crashedCar1);
+    crashedCar1.rotation.y = Math.PI / 4; 
+    crashedCar1.position.set(2.5, 0, 0); 
+    crashSceneGroup.add(crashedCar1);
+
+    const crashedCar2 = createCarGroup(0x8b0000); 
+    addHazardLights(crashedCar2);
+    crashedCar2.rotation.y = -Math.PI / 6; 
+    crashedCar2.position.set(1.5, 0, 2.5); 
+    crashSceneGroup.add(crashedCar2);
+
+    crashSceneGroup.position.set(0, 0, -100);
+    crashSceneGroup.visible = false;
+    scene.add(crashSceneGroup);
+
+    // --- [완전 개편] 반대 차선 정상 주행 차량들 (Ambient Traffic) ---
+    // 트럭 대신 끊임없이 차들이 다가오도록 8대의 차량을 순환시킵니다.
+    const ambientCars = [];
+    const ambientColors = [0xffffff, 0xa0aec0, 0x2b6cb0, 0xc53030, 0x4a5568, 0x000000, 0xe2e8f0, 0xf6ad55]; 
+    for(let i=0; i<8; i++) {
+        let ac = createCarGroup(ambientColors[i]);
+        
+        // 전조등 부착
+        const ahlMat = new THREE.MeshBasicMaterial({ color: 0xffffee });
+        const ahlL = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), ahlMat);
+        ahlL.position.set(-0.8, 0.6, -2.25);
+        const ahlR = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), ahlMat);
+        ahlR.position.set(0.8, 0.6, -2.25);
+        const ahlGlow = new THREE.PointLight(0xffffee, 1.5, 20);
+        ahlGlow.position.set(0, 0.6, -3.0);
+        
+        ac.add(ahlL); ac.add(ahlR); ac.add(ahlGlow);
+        ac.position.set(-2, 0, -50 - (i * 50) - Math.random() * 20); // 좀 더 촘촘하게 배치
+        scene.add(ac);
+        ambientCars.push(ac);
+    }
+
+
+    // --- 물리 상수 ---
+    const TARGET_SPEED_KMH = 60; 
+    const MAX_SPEED = 40; 
+    const ACCEL = 5; 
+    const FRICTION = -1; 
+    const BRAKE_DECEL = -8; 
+    const STEER_SPEED = 6; 
+    const SPAWN_DISTANCE = 60; 
+    const AMBIENT_SPEED = 25; // 반대 차선 정상 차량 속도 (약 90km/h)
+
+    let velocity = 0; 
+    let cruiseTimer = 0; 
+    let triggerTime = 0; 
+    let flashTimer = 0; 
+    
+    let timeObstacleAppeared = 0;
+    let timeBrakePressed = 0;
+    let initialBrakeVelocity = 0;
+    let distanceReacting = 0; 
+    let distanceBraking = 0;  
+
+    const input = { gas: false, brake: false, left: false, right: false, steerAxis: 0 };
+    
+    window.addEventListener('keydown', (e) => {
+        if (state === 'START_SCREEN' && e.code === 'Enter') { startGame(); return; }
+        if (state !== 'START_SCREEN') {
+            if (e.code === 'ArrowUp') { input.gas = true; e.preventDefault(); }
+            if (e.code === 'ArrowDown' || e.code === 'Space') { input.brake = true; e.preventDefault(); }
+            if (e.code === 'ArrowLeft') { input.left = true; e.preventDefault(); }
+            if (e.code === 'ArrowRight') { input.right = true; e.preventDefault(); }
+        }
+    });
+    window.addEventListener('keyup', (e) => {
+        if (e.code === 'ArrowUp') input.gas = false;
+        if (e.code === 'ArrowDown' || e.code === 'Space') input.brake = false;
+        if (e.code === 'ArrowLeft') input.left = false;
+        if (e.code === 'ArrowRight') input.right = false;
+    });
+
+    function updateGamepadInput() {
+        if (state === 'START_SCREEN' || state === 'END') {
+            input.gas = input.brake = input.left = input.right = false; input.steerAxis = 0;
+            return;
+        }
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        for (let i = 0; i < gamepads.length; i++) {
+            const gp = gamepads[i];
+            if (gp) {
+                let gasVal = gp.buttons[7] ? gp.buttons[7].value : 0;
+                let brakeVal = gp.buttons[6] ? gp.buttons[6].value : 0;
+                input.gas = gasVal > 0.1;
+                input.brake = brakeVal > 0.1;
+                
+                if (Math.abs(gp.axes[0]) > 0.05) {
+                    input.steerAxis = gp.axes[0];
+                } else {
+                    input.steerAxis = 0;
+                }
+            }
+        }
+    }
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    const clock = new THREE.Clock();
+    
+    const speedDisplay = document.getElementById('speedDisplay');
+    const statusMsg = document.getElementById('status-msg');
+    const resultModal = document.getElementById('result-modal');
+
+    window.startGame = function() {
+        const nameInput = document.getElementById('player-name').value.trim();
+        if(!nameInput) {
+            alert("도전자의 이름을 입력해주세요!");
+            document.getElementById('player-name').focus();
+            return;
+        }
+        
+        initAudio();
+        
+        currentPlayerName = nameInput;
+        document.getElementById('current-player-display').innerText = currentPlayerName;
+        
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('ui-layer').style.display = 'flex';
+        
+        resetSimulation(false);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        let dt = clock.getDelta();
+        if (dt > 0.1) dt = 0.1; 
+        
+        if (state !== 'START_SCREEN' && state !== 'END') {
+            updateGamepadInput(); 
+            
+            let currentAccel = 0;
+            if (input.brake) currentAccel = BRAKE_DECEL;
+            else if (input.gas) currentAccel = ACCEL;
+            else currentAccel = velocity > 0 ? FRICTION : 0;
+
+            velocity += currentAccel * dt;
+            if (velocity < 0) velocity = 0;
+            if (velocity > MAX_SPEED) velocity = MAX_SPEED;
+
+            updateAudioEffects(velocity, input.brake);
+
+            if (input.left) carX -= STEER_SPEED * dt;
+            if (input.right) carX += STEER_SPEED * dt;
+            if (Math.abs(input.steerAxis) > 0) carX += input.steerAxis * STEER_SPEED * dt;
+            
+            carX = Math.max(-3.5, Math.min(3.5, carX)); 
+            camera.position.x = carX;
+
+            const moveZ = velocity * dt;
+            
+            lines.forEach(line => { line.position.z += moveZ; if (line.position.z > 5) line.position.z -= 200; });
+            rails.forEach(r => { r.position.z += moveZ; if(r.position.z > 5) r.position.z -= 150; });
+            buildings.forEach(b => { b.position.z += moveZ; if(b.position.z > 20) b.position.z -= 250; });
+
+            // 1. 반대 차선 정상 주행 차량들 무한 루프 이동 (좌측 차선을 항상 붐비게 함)
+            ambientCars.forEach(ac => {
+                ac.position.z += moveZ + (AMBIENT_SPEED * dt);
+                
+                // 카메라 뒤로 넘어가면 저 멀리 다시 스폰
+                if (ac.position.z > 10) {
+                    ac.position.z = camera.position.z - 350 - Math.random() * 100;
+                }
+                
+                // 좌측 차선 차량들과의 충돌 판정
+                if (ac.visible && ac.position.z > -4 && ac.position.z < 4) {
+                    if (carX <= 0.5) { // 중앙선을 넘어 좌측 차선에 걸치면 충돌
+                        velocity = 0; 
+                        if (state === 'REACTION' || state === 'BRAKING') {
+                            // 사고 현장 피하려다 부딪힌 경우
+                            showResult('CRASH_ONCOMING');
+                        } else {
+                            // 평소 주행 중 중앙선 넘은 경우
+                            showResult('CRASH_AMBIENT');
+                        }
+                    }
+                }
+            });
+
+            // 2. 우측 차선 사고 현장 이동
+            if (crashSceneGroup.visible) {
+                crashSceneGroup.position.z += moveZ;
+                
+                flashTimer += dt;
+                if(flashTimer > 0.4) { 
+                    crashedCar1.userData.hazardLights.forEach(l => l.visible = !l.visible); 
+                    crashedCar2.userData.hazardLights.forEach(l => l.visible = !l.visible); 
+                    flashTimer = 0; 
+                }
+            }
+
+            let speedKmh = Math.round(velocity * 3.6);
+            speedDisplay.innerText = speedKmh;
+            
+            if (speedKmh > TARGET_SPEED_KMH && !input.brake) speedDisplay.style.color = "#ff3333";
+            else speedDisplay.style.color = "#00ffcc";
+
+            if (state === 'ACCEL') {
+                if (speedKmh >= TARGET_SPEED_KMH) {
+                    state = 'CRUISE';
+                    cruiseTimer = 0;
+                    triggerTime = 2 + Math.random() * 3; 
+                    statusMsg.innerText = "정상 주행 중...";
+                    statusMsg.style.color = "#00ffcc";
+                }
+            } 
+            else if (state === 'CRUISE') {
+                cruiseTimer += dt;
+                if (speedKmh < TARGET_SPEED_KMH - 10) {
+                    state = 'ACCEL';
+                    statusMsg.innerText = `${TARGET_SPEED_KMH}km/h 이상으로 가속하세요!`;
+                    statusMsg.style.color = "#ffffff";
+                } else if (cruiseTimer >= triggerTime) {
+                    state = 'REACTION';
+                    
+                    crashSceneGroup.position.z = camera.position.z - SPAWN_DISTANCE; 
+                    crashSceneGroup.visible = true;
+                    
+                    // 함정 발동 시, 마주 오는 차량들이 사고 현장 옆을 촘촘히 덮치도록 간격 재배치
+                    ambientCars.forEach((ac, i) => {
+                        ac.position.z = camera.position.z - SPAWN_DISTANCE - (i * 45);
+                    });
+
+                    timeObstacleAppeared = performance.now();
+                    initialBrakeVelocity = velocity; 
+                    
+                    statusMsg.innerText = "🚨 전방 대형 사고 발생!!!";
+                    statusMsg.style.color = "#ff0000";
+                }
+            }
+            else if (state === 'REACTION') {
+                distanceReacting += moveZ; 
+                
+                if (input.brake) {
+                    state = 'BRAKING';
+                    timeBrakePressed = performance.now();
+                    statusMsg.style.display = 'none';
+                }
+            }
+            else if (state === 'BRAKING') {
+                distanceBraking += moveZ; 
+                camera.position.z = Math.max(-0.5, camera.position.z - (velocity * 0.001)); 
+
+                if (velocity === 0) showResult('SUCCESS');
+            }
+
+            if (state !== 'END') {
+                // 다중 추돌 사고 현장 충돌 판정 (우측 차선)
+                if (crashSceneGroup.visible && crashSceneGroup.position.z > -5 && crashSceneGroup.position.z < 8) {
+                    if (carX > -1.2) { // 우측 차선에 걸치면 부딪힘
+                        velocity = 0; showResult('CRASH_PILEUP');
+                    }
+                }
+            }
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    function showResult(resultType) {
+        state = 'END';
+        updateAudioEffects(0, false); 
+        
+        const title = document.getElementById('result-title');
+        const desc = document.getElementById('result-desc');
+        const flash = document.getElementById('flash');
+        
+        let reactionTimeStr = "0.00";
+        if (timeBrakePressed > 0) {
+            reactionTimeStr = ((timeBrakePressed - timeObstacleAppeared) / 1000).toFixed(2);
+        } else {
+            reactionTimeStr = "측정 불가";
+            distanceReacting = Math.abs(crashSceneGroup.position.z - (-SPAWN_DISTANCE)); 
+        }
+
+        const speedKmh = Math.round(initialBrakeVelocity * 3.6);
+        const bdFormatted = distanceBraking.toFixed(1);
+
+        document.getElementById('res-speed').innerText = speedKmh + " km/h";
+        document.getElementById('res-rt').innerText = timeBrakePressed > 0 ? reactionTimeStr + " 초" : "실패";
+        document.getElementById('res-rd').innerText = distanceReacting.toFixed(1) + " m";
+        document.getElementById('res-bd').innerText = bdFormatted + " m";
+        document.getElementById('res-td').innerText = (distanceReacting + distanceBraking).toFixed(1) + " m";
+
+        if (resultType === 'SUCCESS') {
+            playSuccessSound();
+            title.innerText = "🎉 안전하게 정지했습니다!";
+            title.className = "text-4xl font-bold mb-4 text-green-400";
+            desc.innerHTML = `훌륭합니다! 다중 추돌 사고 현장을 확인하고 침착하게 제동했습니다.<br>(장애물까지 여유 거리: ${(SPAWN_DISTANCE - distanceReacting - distanceBraking).toFixed(1)}m)`;
+            
+            leaderboard.push({ name: currentPlayerName, speed: speedKmh, brakeDist: parseFloat(bdFormatted) });
+        } else {
+            playCrashSound(); 
+            setTimeout(playFailSound, 500); 
+            
+            document.body.classList.add('shake'); 
+            flash.style.opacity = 0.6; 
+            setTimeout(() => { flash.style.opacity = 0; document.body.classList.remove('shake'); }, 300);
+            
+            if (resultType === 'CRASH_PILEUP') {
+                title.innerText = "💥 쾅! 연쇄 추돌 사고!";
+                title.className = "text-4xl font-bold mb-4 text-red-500";
+                desc.innerText = `전방 주시 태만 및 제동거리 부족! 우측 차선의 사고 현장을 피하지 못했습니다. 과속 상태에서는 제아무리 빨리 브레이크를 밟아도 멈출 수 없습니다.`;
+            } else if (resultType === 'CRASH_ONCOMING') {
+                title.innerText = "💀 치명적인 정면충돌!!!";
+                title.className = "text-4xl font-bold mb-4 text-purple-500";
+                desc.innerText = `[함정 발동] 사고 현장을 피하려고 빈 차선으로 핸들을 꺾었군요! 마주 오던 승용차와 정면으로 충돌했습니다. 과속 상태에서의 섣부른 차선 변경은 가장 위험한 행동입니다.`;
+            } else if (resultType === 'CRASH_AMBIENT') {
+                title.innerText = "💥 정상 주행 차량과 충돌!";
+                title.className = "text-4xl font-bold mb-4 text-orange-500";
+                desc.innerText = `[차선 침범] 중앙선을 넘어 역주행하다가 정상적으로 마주 오던 승용차와 충돌했습니다. 차선을 엄격히 지키며 주행해야 합니다.`;
+                
+                document.getElementById('res-speed').innerText = "-";
+                document.getElementById('res-rt').innerText = "-";
+                document.getElementById('res-rd').innerText = "-";
+                document.getElementById('res-bd').innerText = "-";
+                document.getElementById('res-td').innerText = "-";
+            }
+        }
+
+        updateLeaderboardUI();
+        resultModal.style.display = 'block';
+    }
+
+    function updateLeaderboardUI() {
+        const tbody = document.getElementById('leaderboard-body');
+        tbody.innerHTML = '';
+        
+        if (leaderboard.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">아직 성공한 도전자가 없습니다.</td></tr>';
+            return;
+        }
+
+        leaderboard.sort((a, b) => {
+            if (b.speed !== a.speed) return b.speed - a.speed;
+            return a.brakeDist - b.brakeDist;
+        });
+
+        const top5 = leaderboard.slice(0, 5);
+        top5.forEach((entry, index) => {
+            const tr = document.createElement('tr');
+            tr.className = "border-b border-slate-700/50 last:border-0";
+            
+            let rankIcon = index + 1;
+            if (index === 0) rankIcon = '🥇';
+            if (index === 1) rankIcon = '🥈';
+            if (index === 2) rankIcon = '🥉';
+
+            tr.innerHTML = `
+                <td class="py-2 text-center text-lg">${rankIcon}</td>
+                <td class="py-2 font-bold ${entry.name === currentPlayerName ? 'text-yellow-300' : 'text-white'}">${entry.name}</td>
+                <td class="py-2 text-right text-blue-300 font-mono">${entry.speed} km/h</td>
+                <td class="py-2 text-right text-green-300 font-mono">${entry.brakeDist} m</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.resetSimulation = function(newChallenger) {
+        if (newChallenger) {
+            state = 'START_SCREEN';
+            document.getElementById('result-modal').style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'none';
+            document.getElementById('start-screen').style.display = 'flex';
+            document.getElementById('player-name').value = '';
+            currentPlayerName = '';
+            return;
+        }
+
+        velocity = 0;
+        state = 'ACCEL';
+        crashSceneGroup.visible = false;
+        crashSceneGroup.position.z = -100;
+        
+        // 반대 차선 정상 차량들 위치 리셋
+        ambientCars.forEach((ac, i) => {
+            ac.position.set(-2, 0, -50 - (i * 60) - Math.random() * 30);
+        });
+        
+        distanceReacting = 0;
+        distanceBraking = 0;
+        timeBrakePressed = 0;
+        
+        carX = 2; // 우측 차선으로 원복
+        camera.position.set(carX, 1.2, 0);
+
+        resultModal.style.display = 'none';
+        statusMsg.style.display = 'block';
+        statusMsg.innerText = "지정 속도(60km/h)까지 엑셀(↑)을 밟아 가속하세요!";
+        statusMsg.style.color = "#ffffff";
+        
+        input.gas = input.brake = input.left = input.right = false;
+        input.steerAxis = 0;
+    };
+
+    animate();
+
+</script>
+</body>
+</html>
+
+
