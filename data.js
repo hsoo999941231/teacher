@@ -14,7 +14,7 @@ window.SITE_DATA = [
     "type": "시뮬레이션",
     "author": "",
     "url": "제동거리.html",
-    "download": "https://drive.google.com/file/d/1WklNtoUzr2_cdAeYHfKEKJfF2UA0ix7w/view?usp=drive_link",
+    "download": "제동거리.html",
     "guide": "시뮬레이션 파일 제작 가이드.html"
   },
   {
@@ -27,7 +27,7 @@ window.SITE_DATA = [
     "type": "HTML 도구",
     "author": "",
     "url": "자리배치프로그램.html",
-    "download": "https://drive.google.com/file/d/1GnSUFYxu9btb66HAaALGnMXSv11kMI1P/view",
+    "download": "자리배치프로그램.html",
     "guide": ""
   }
 ];
