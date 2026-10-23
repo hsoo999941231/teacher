@@ -1,93 +1,15 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>함께 여는 교실</title>
-<meta name="description" content="AI 전문적학습공동체 과학수업 자료와 교사 업무 경감 자료">
-<style>
-:root{--ink:#203039;--muted:#64727a;--line:#e0e7e9;--accent:#315ec1;--tint:#eff4ff}
-*{box-sizing:border-box}body{margin:0;font-family:"Pretendard","Malgun Gothic",sans-serif;background:#fafbfc;color:var(--ink);line-height:1.6;word-break:keep-all}a{color:inherit;text-decoration:none}button,input{font:inherit}button,a{ -webkit-tap-highlight-color:transparent}button{cursor:pointer}a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #c58125;outline-offset:5px}[hidden]{display:none!important}
-header{max-width:1120px;margin:auto;padding:30px 32px;display:flex;align-items:center;justify-content:space-between}.brand{font-size:17px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:10px}.mark{color:#315ec1;font-size:25px}.community{font-size:12px;color:var(--muted)}main{max-width:1120px;margin:auto;padding:0 32px}
-.home{min-height:calc(100svh - 145px);display:flex;flex-direction:column;justify-content:center;padding-bottom:70px}.choices{display:grid;grid-template-columns:1fr 1fr;gap:24px}.choice{min-height:300px;background:#fff;border:1px solid var(--line);border-radius:24px;padding:36px;display:flex;flex-direction:column;align-items:flex-start;position:relative;transition:transform .18s,border-color .18s,box-shadow .18s}.choice:hover{transform:translateY(-5px);border-color:#a6bce8;box-shadow:0 18px 50px #20303908}.choice.work:hover{border-color:#9ac9be}.symbol{width:65px;height:65px;border-radius:18px;display:grid;place-items:center;background:#eff4ff;color:#315ec1}.work .symbol{background:#eaf6f2;color:#237766}.symbol svg{width:36px;height:36px}.choice h1{font-size:clamp(23px,3vw,31px);font-weight:750;letter-spacing:-1px;margin:auto 0 0;padding-top:40px}.arrow{position:absolute;bottom:37px;right:32px;font-size:23px;color:#8a979e}.choice h1{padding-right:25px}
-footer{max-width:1120px;margin:auto;padding:18px 32px 24px;font-size:11px;color:#7c878d}
-.library{padding:26px 0 60px;min-height:calc(100svh - 145px)}.crumb{display:flex;gap:12px;align-items:center;font-size:13px;color:var(--muted);margin-bottom:28px}.crumb a:hover{color:var(--accent)}.heading{display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:28px}h2{font-size:32px;letter-spacing:-1px;line-height:1.35;margin:0}.search{width:285px;padding:12px 15px;border:1px solid var(--line);border-radius:11px;background:white;color:var(--ink)}.filters{display:flex;gap:9px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:22px}.filter{border:1px solid var(--line);padding:9px 18px;background:#fff;border-radius:30px;font-size:13px;color:var(--muted)}.filter[aria-pressed="true"]{background:var(--accent);color:white;border-color:var(--accent)}.list-meta{margin:23px 0 17px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:15px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.resource{position:relative;border:1px solid var(--line);border-radius:17px;background:white;padding:25px;display:flex;flex-direction:column;min-height:225px}.label{font-size:11px;font-weight:700;color:var(--accent)}.resource h3{font-size:19px;margin:14px 0 10px;letter-spacing:-.6px}.resource p{font-size:13px;color:var(--muted);margin:0 0 24px;flex:1}.card-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px;border-top:1px solid #edf0f2;padding-top:15px}.status{color:#7c878d}.open{color:var(--accent);font-weight:700}.empty{text-align:center;padding:70px 15px;border:1px dashed var(--line);border-radius:15px;color:var(--muted)}.reset{display:block;margin:18px auto 0;padding:9px 16px;border:0;border-radius:8px;background:var(--ink);color:white}.back-home{display:inline-flex;margin-top:35px;font-size:13px;color:var(--muted)}.skip{position:absolute;top:-80px;left:20px;background:white;padding:12px;z-index:5}.skip:focus{top:10px}noscript{display:block;border:1px solid #ddd;padding:20px}
-@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.choice{padding:28px;min-height:270px}.choice h1{font-size:25px}.arrow{right:25px;bottom:28px}}
-@media(max-width:600px){header{padding:24px 22px}.community{font-size:10px}.brand{font-size:15px}main{padding:0 22px}.home{padding:24px 0 50px;min-height:calc(100svh - 135px)}.choices{grid-template-columns:1fr;gap:16px}.choice{min-height:210px;padding:27px}.choice h1{font-size:25px;padding-top:25px}.symbol{width:52px;height:52px;border-radius:15px}.symbol svg{width:30px;height:30px}.heading{display:block}.search{width:100%;margin-top:20px}h2{font-size:27px}.grid{grid-template-columns:1fr}.list-meta{flex-wrap:wrap}.filter{padding:8px 13px;font-size:12px}footer{padding:18px 22px}.library{padding-top:15px}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
-.resource:has(.open):hover{border-color:var(--accent);box-shadow:0 6px 22px #2030390a}.open::after{content:'';position:absolute;inset:0;border-radius:17px}.open:focus-visible::after{outline:3px solid var(--accent);outline-offset:3px}
-</style>
-</head>
-<body>
-<a href="#content" class="skip">본문으로 이동</a>
-<header><a class="brand" href="#home"><span class="mark" aria-hidden="true">✳</span>함께 여는 교실</a><span class="community">AI 전문적학습공동체</span></header>
-<main id="content">
-<section class="home" id="home-view" aria-label="자료 분류 선택">
-<div class="choices">
-<a class="choice" href="#science"><span class="symbol" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="24" cy="24" rx="20" ry="8"/><ellipse cx="24" cy="24" rx="20" ry="8" transform="rotate(60 24 24)"/><ellipse cx="24" cy="24" rx="20" ry="8" transform="rotate(-60 24 24)"/><circle cx="24" cy="24" r="3" fill="currentColor"/></svg></span><h1>과학수업 관련 자료</h1><span class="arrow" aria-hidden="true">↗</span></a>
-<a class="choice work" href="#work"><span class="symbol" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="10" width="32" height="31" rx="5"/><path d="M17 10V7h14v3M16 21l3 3 6-7m-9 15 3 3 6-7m4-6h5m-5 11h5" stroke-linecap="round" stroke-linejoin="round"/></svg></span><h1>교사 업무 경감 자료</h1><span class="arrow" aria-hidden="true">↗</span></a>
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>함께 여는 과학</title><meta name="description" content="AI 전문적학습공동체의 과학수업 자료와 교사 업무 경감 자료"><link rel="stylesheet" href="style.css"></head>
+<body><header><a class="brand" href="#"><span>◈</span> 함께 여는 과학</a><nav aria-label="자료 참여"><a id="submit" class="button small">자료 제출</a><a id="edit" class="button small">수정 요청</a></nav></header>
+<main><section id="home" aria-label="자료 분류"><div class="choices">
+<button class="choice" data-category="science"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><ellipse cx="16" cy="16" rx="14" ry="5" transform="rotate(45 16 16)"/><ellipse cx="16" cy="16" rx="14" ry="5" transform="rotate(-45 16 16)"/><circle cx="16" cy="16" r="2" fill="currentColor"/></svg><strong>과학수업관련자료 <span>↗</span></strong></button>
+<button class="choice work" data-category="work"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="6" y="7" width="20" height="22" rx="3"/><path d="M12 7V3h8v4M11 15h10M11 21h7"/></svg><strong>교사 업무 경감자료 <span>↗</span></strong></button>
 </div></section>
-<section class="library" id="library-view" aria-labelledby="section-title" hidden>
-<div class="crumb"><a href="#home">← 처음으로</a><span aria-hidden="true">/</span><span id="crumb-current"></span></div>
-<div class="heading"><h2 id="section-title" tabindex="-1"></h2><input class="search" id="search" type="search" placeholder="자료 검색" aria-label="현재 분류에서 자료 검색"></div>
-<div class="filters" id="filters" aria-label="세부 분류"></div>
-<div class="list-meta"><span id="count" role="status" aria-live="polite"></span><span id="sample-note"></span></div>
-<div class="grid" id="cards"></div>
-<div class="empty" id="empty" hidden><span>이 분류에 등록된 자료가 없거나 검색 결과가 없습니다.</span><button class="reset" id="reset">이 분야의 전체 자료 보기</button></div>
-<a class="back-home" href="#home">← 두 가지 분류로 돌아가기</a>
-</section>
-<noscript>자료를 분류별로 보려면 브라우저의 JavaScript를 허용해주세요.</noscript>
-</main>
-<footer>© 2026 함께 여는 교실</footer>
-
-<!-- 자료를 등록할 때 아래 JSON 목록만 수정하세요.
-category: science(과학수업), work(교사 업무 경감)
-subcategory: science는 물리학/화학/생명과학/지구과학/과학탐구실험/융합·공통
-             work는 학급 운영/평가·기록/문서·행정/시간·일정/기타 도구
-url: 빈 문자열은 준비 중. 내부 파일은 tools/timer/index.html 같은 상대경로.
-example: 실제 자료는 false. 준비 중인 예시 카드는 true.
-마지막 항목 뒤에는 쉼표를 붙이지 마세요. -->
-<script id="resource-data" type="application/json">
-[
-  {"title": "제동거리 체험","category":"science","subcategory":"물리학","description":"돌발 상황에서 제동하며 반응 시간, 공주 거리와 제동 거리를 확인하는 체험 자료입니다.","type":"시뮬레이션","url":"제동거리.html","example": false},
-  {"title":"발명 아이디어 탐구 활동지","category":"science","subcategory":"과학탐구실험","description":"과학 원리로 일상의 불편을 해결하는 설계 활동입니다.","type":"활동지","url":"","example":true},
-  {"title":"학교 주변 생태 탐구","category":"science","subcategory":"생명과학","description":"주변 생물의 특징과 서식 환경을 관찰합니다.","type":"탐구 활동","url":"","example":true},
-  {"title":"학급 자리배치 도우미","category":"work","subcategory":"학급 운영","description":"교실 구성에 맞춰 학생의 자리를 배치합니다.","type":"웹 도구","url":"","example":true},
-  {"title":"수업·수행평가 타이머","category":"work","subcategory":"시간·일정","description":"활동 시간과 남은 시간을 큰 화면으로 안내합니다.","type":"웹 도구","url":"","example":true},
-  {"title":"안내문 작성 도움 자료","category":"work","subcategory":"문서·행정","description":"안내문 양식과 AI 활용 예시를 모았습니다.","type":"문서","url":"","example":true}
-]
-</script>
-<script>
-'use strict';
-const GROUPS={
-science:{title:'과학수업 관련 자료',color:'#315ec1',subcategories:['물리학','화학','생명과학','지구과학','과학탐구실험','융합·공통']},
-work:{title:'교사 업무 경감 자료',color:'#237766',subcategories:['학급 운영','평가·기록','문서·행정','시간·일정','기타 도구']}
-};
-const $=id=>document.getElementById(id);
-let resources=[],dataError=false;
-try{resources=JSON.parse($('resource-data').textContent);if(!Array.isArray(resources)||resources.some(r=>!r||!GROUPS[r.category]||typeof r.title!=='string'||typeof r.subcategory!=='string'||typeof r.url!=='string'))throw Error('잘못된 자료 형식');}catch(e){resources=[];dataError=true;}
-let category='science',subcategory='전체';
-function safeURL(value){if(!value||!value.trim())return '';try{const u=new URL(value,location.href);return ['https:','http:'].includes(u.protocol)||(location.protocol==='file:'&&u.protocol==='file:')?u.href:'';}catch{return '';}}
-function filteredResources(){const q=$('search').value.trim().toLowerCase();return resources.filter(r=>r.category===category&&(subcategory==='전체'||r.subcategory===subcategory)&&[r.title,r.description||'',r.subcategory,r.type||''].join(' ').toLowerCase().includes(q));}
-function render(){
-const list=filteredResources();$('cards').textContent='';
-for(const r of list){const card=document.createElement('article');card.className='resource';const label=document.createElement('span');label.className='label';label.textContent=r.subcategory+' · '+(r.type||'자료');
-const title=document.createElement('h3');title.textContent=r.title;
-const description=document.createElement('p');description.textContent=r.description||'';
-const bottom=document.createElement('div');bottom.className='card-bottom';
-const status=document.createElement('span');status.className='status';const url=safeURL(r.url);status.textContent=url?'이용 가능':(r.example?'준비 중 · 예시':'준비 중');bottom.append(status);
-if(url){const link=document.createElement('a');link.className='open';link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.textContent='실행하기 ↗';link.setAttribute('aria-label',r.title+' 열기 (새 탭)');bottom.append(link);}
-card.append(label,title,description,bottom);$('cards').append(card);
-}
-$('count').textContent=dataError?'자료 목록을 읽지 못했습니다. resource-data의 JSON 형식을 확인해주세요.':list.length+'개 자료';
-$('sample-note').textContent=list.some(r=>r.example)?'준비 중 항목은 구성 예시입니다.':'';
-$('empty').hidden=list.length>0||dataError;
-$('filters').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.value===subcategory)));
-}
-function buildFilters(){const choices=['전체',...new Set([...GROUPS[category].subcategories,...resources.filter(r=>r.category===category).map(r=>r.subcategory)])];$('filters').textContent='';choices.forEach(value=>{const b=document.createElement('button');b.className='filter';b.dataset.value=value;b.textContent=value;b.setAttribute('aria-pressed',String(value===subcategory));b.addEventListener('click',()=>{subcategory=value;render();});$('filters').append(b);});}
-function route(focus=false){let hash;try{hash=decodeURIComponent(location.hash.slice(1));}catch{hash='home';}const isLibrary=Object.prototype.hasOwnProperty.call(GROUPS,hash);$('home-view').hidden=isLibrary;$('library-view').hidden=!isLibrary;
-if(!isLibrary){document.title='함께 여는 교실';if(focus)document.querySelector('.choice').focus();return;}
-category=hash;subcategory='전체';$('search').value='';$('section-title').textContent=GROUPS[category].title;$('crumb-current').textContent=GROUPS[category].title;document.documentElement.style.setProperty('--accent',GROUPS[category].color);document.title=GROUPS[category].title+' | 함께 여는 교실';buildFilters();render();if(focus)$('section-title').focus();
-}
-window.addEventListener('hashchange',()=>{route(true);window.scrollTo(0,0);});
-$('search').addEventListener('input',render);$('reset').addEventListener('click',()=>{subcategory='전체';$('search').value='';render();$('search').focus();});route();
-</script></body></html>
+<section id="browse" hidden><a href="#" class="small muted">← 처음으로</a><h1 id="heading" tabindex="-1"></h1><div class="filters">
+<label class="small" for="search">자료 검색</label><input class="search" id="search" type="search" placeholder="제목, 설명, 과목으로 검색">
+<div id="scienceFilters"><fieldset><legend>학교급</legend><div id="school" class="chips"></div></fieldset><fieldset><legend>학년 · 여러 개 선택 가능</legend><div id="grades" class="chips"></div></fieldset><fieldset><legend>과목 · 여러 개 선택 가능</legend><div id="subjects" class="chips"></div></fieldset><p class="small muted">고등학교 과목의 편성 학년은 학교에 따라 다를 수 있습니다.</p></div>
+<fieldset id="workFilters" hidden><legend>업무 분류</legend><div id="work" class="chips"></div></fieldset>
+<div class="toolbar"><span class="small muted">선택하지 않으면 전체 자료를 표시합니다.</span><button class="small" id="reset">선택 초기화</button></div></div>
+<p id="count" class="small muted" role="status"></p><div id="cards" class="cards"></div></section>
+<noscript>자료 목록을 보려면 브라우저에서 JavaScript를 허용해 주세요.</noscript></main><footer>AI 전문적학습공동체 · 함께 나누는 수업과 업무</footer>
+<script src="catalog.js"></script><script src="config.js"></script><script src="data.js"></script><script src="core.js"></script><script src="app.js"></script></body></html>
